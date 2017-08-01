@@ -131,7 +131,7 @@ public class Board {
     	return dest;
     }
     
-    public String toString() {              // string representation of this board (in the output format specified below)
+    public String toString() {              // string  of this board (in the output format specified below)
     	StringBuilder s = new StringBuilder();
     	s.append(N + "\n");
     	for (int i = 0; i < N; i++) {

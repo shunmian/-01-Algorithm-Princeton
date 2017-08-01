@@ -1,17 +1,15 @@
 import edu.princeton.cs.algs4.StdOut;
 import edu.princeton.cs.algs4.Point2D;
 import edu.princeton.cs.algs4.RectHV;
-
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.StdDraw;
 import edu.princeton.cs.algs4.Queue;
-//import edu.princeton.cs.algs4.RectHV;
-
 
 public class KdTree {
 	
 	private Node root;
 	private int size = 0;
+	private Queue<Node> toStringBFSQueue;
 	
 	private static class Node implements Comparable {
 		private Point2D p;
@@ -19,6 +17,7 @@ public class KdTree {
 		private Node lb;
 		private Node rt;
 		private boolean isH;
+		private int level;
 
 		private Node(Point2D p) {
 			this.p = p;
@@ -216,7 +215,9 @@ public class KdTree {
 		}
 		
 		if(null != x.lb ) {
-			if(x.lb.rect.contains(targetP)) {
+			int cmp = x.compareTo(new Node(targetP));
+//			if(x.lb.rect.contains(targetP)) {
+			if (cmp == 1) {
 				this.findNearestPoint(x.lb, targetP, minP);
 				this.findNearestPoint(x.rt, targetP, minP);
 			}else {
@@ -224,7 +225,9 @@ public class KdTree {
 				this.findNearestPoint(x.lb, targetP, minP);
 			}
 		}else if(null != x.rt ) {
-			if (x.rt.rect.contains(targetP)) {
+			int cmp = x.compareTo(new Node(targetP));
+//			if (x.rt.rect.contains(targetP)) {
+			if (cmp == -1) {
 				this.findNearestPoint(x.rt, targetP, minP);
 				this.findNearestPoint(x.lb, targetP, minP);
 			} else {
@@ -235,6 +238,53 @@ public class KdTree {
 			return;
 		}		
 	}
+	
+	private String toStringRepresenation() {
+		this.toStringBFSQueue = new Queue<Node>();
+		StringBuilder sb = new StringBuilder();
+		this.toStringBFSQueue.enqueue(root);
+		int level = -1;
+		root.level = 0;
+		boolean levelFlag = false;
+		sb = this.BFSToString(this.toStringBFSQueue, sb, levelFlag, level);
+		return sb.substring(1);	// remove first "\n"
+	}
+	
+	// BFS representation, Poin2D(-1.0,-1.0) represents null child for parent with only one non-null child.
+	private StringBuilder BFSToString(Queue<Node> queue, StringBuilder sb, Boolean levelFlag, int level) {
+		if(queue.isEmpty()) return sb;
+		
+		Node n = queue.dequeue();
+		if(levelFlag && n.level != level) {
+			levelFlag = false;
+		}
+		if(!levelFlag) {
+			level++;
+			levelFlag = true;
+			sb.append("\nlevel: " + n.level + "     ");
+		}
+		if(null != n.lb) {
+			n.lb.level = n.level+1; 
+			queue.enqueue(n.lb);
+			if(null == n.rt){
+				Node nullNode = new Node(new Point2D(-1.0,-1.0));
+				nullNode.level = n.level + 1;
+				queue.enqueue(nullNode);
+			}
+		}
+		if(null != n.rt) {
+			if(null == n.lb){
+				Node nullNode = new Node(new Point2D(-1.0,-1.0));
+				nullNode.level = n.level + 1;
+				queue.enqueue(nullNode);
+			}
+			n.rt.level = n.level + 1;
+			queue.enqueue(n.rt);
+		}
+		sb.append(n.p.toString() + " ");
+		return BFSToString(queue, sb, levelFlag, level);
+	}
+	
 	
 	public static void main(String[] args) {	// unit testing of the methods (optional)
 		
@@ -254,7 +304,7 @@ public class KdTree {
         }
 		kdtree.draw();
 		StdDraw.show();
-        StdOut.println(kdtree);
+        StdOut.println(kdtree.toStringRepresenation());
 
         Point2D targetP = new Point2D(0.5,0.89);
         StdOut.printf("nearest pioints to %s: %s\n",targetP, kdtree.nearest(targetP));
